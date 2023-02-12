@@ -1,7 +1,10 @@
 from collections import Counter
 
-"""Программа для подсчета количества букв в тексте"""
+"""There is a program for counting the number of letters in a text"""
 with open('test.txt', encoding='utf8') as file:
-    text = filter(lambda x: x.isalpha(), file.read().lower())
-    letter = input('Введите любую английскую букву: ').lower()
-    print(f'Буква встречается {Counter(text)[letter]} раз(а) в тексте')
+    letter = input('Enter a letter: ').lower()
+    count = 0
+    for line in file:
+        text = filter(lambda x: x.isalpha(), line.lower())
+        count += Counter(text)[letter]
+    print(f'The letter occurs {count} times in the text')
