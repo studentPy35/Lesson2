@@ -1,6 +1,23 @@
 import csv
 
 
+def use_cache(func):
+    """Decorator for using cache"""
+    cache_dict = {}
+
+    def wrapper(*args):
+        if len(args) == 1 or len(args) == 0:
+            if args not in cache_dict:
+                cache_dict[args] = func(*args)
+            return cache_dict[args]
+        elif len(args) == 2:
+            if args[1] not in cache_dict:
+                cache_dict[args[1]] = func(*args)
+            return cache_dict[args[1]]
+    return wrapper
+
+
+@use_cache
 def find_info(dict_list: list, name: str) -> list:
     company_list = []
     for company_dict in dict_list:
@@ -9,6 +26,7 @@ def find_info(dict_list: list, name: str) -> list:
     return company_list
 
 
+@use_cache
 def get_companies_by_sector(dict_list: list, sector: str) -> list:
     return list(filter(lambda comp:
                        sector.lower() == comp['Sector'].lower(), dict_list))
@@ -27,25 +45,14 @@ def get_top_10_companies(dict_list: list) -> list:
     return [(dct['Name'], dct['Price']) for dct in sorted_lst[:10]]
 
 
+@use_cache
 def print_goodbye():
     return 'GOODBYE'
 
 
 print('Choose the action from menu:\n1 - Find info by name\n'
-      '2 - Get all companies by sector\n3 - Calculate average price\n'
-      '4 - Get top 10 companies\n5 - Exit')
-
-
-def use_cache(func):
-    """Decorator for using cache"""
-    cache_dict = {}
-
-    def wrapper(*args):
-        if args not in cache_dict:
-            cache_dict[args] = func(*args)
-        return cache_dict[args]
-
-    return wrapper
+      '2 - Get all companies by sector\n'
+      '3 - Calculate average price\n4 - Get top 10 companies\n5 - Exit')
 
 
 @use_cache
