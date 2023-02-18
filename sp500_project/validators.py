@@ -1,11 +1,8 @@
 from errors import (NotDigitError,
                     UnexpectedNumberError,
                     WrongSymbolError,
-                    CompanyAlreadyExistsError,
                     WrongNameLengthError,
-                    WrongSectorError,
                     WrongPriceError,
-                    NoSuchSymbolError,
                     WrongGenerationNumberError)
 from string import ascii_uppercase
 
@@ -27,30 +24,10 @@ def check_symbol(symbol: str):
             raise WrongSymbolError('The letters should be in ascii')
 
 
-def check_symbol_uniqueness(symbol: str, file: list):
-    if symbol.lower() in map(lambda dct: dct.get('Symbol').lower(), file):
-        raise CompanyAlreadyExistsError('This company already exists.')
-
-
-def check_symbol_existence(symbol, file):
-    if symbol.lower() not in map(lambda dct: dct.get('Symbol').lower(), file):
-        raise NoSuchSymbolError('Company with this symbol is not exist.')
-
-
 def check_name(name: str):
     if len(name) < 3 or len(name) > 50:
         raise WrongNameLengthError('The length of company'
                                    ' name should be from 3 to 50.')
-
-
-def check_name_uniqueness(name: str, file: list):
-    if name.lower() in map(lambda dct: dct.get('Name').lower(), file):
-        raise CompanyAlreadyExistsError('This company already exists.')
-
-
-def check_sector(sector: str, file: list):
-    if sector.lower() not in map(lambda dct: dct.get('Sector').lower(), file):
-        raise WrongSectorError('This sector is not exist.')
 
 
 def check_price(price: str):
