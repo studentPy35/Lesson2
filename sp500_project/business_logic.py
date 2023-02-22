@@ -10,22 +10,24 @@ from data_access import (get_file_information,
                          CompanyAlreadyExistsError,
                          WrongSectorError,
                          NoSuchSymbolError)
-import datetime
+from time import time
+
+cache = {}
 
 
-def use_cache(live_time=datetime.timedelta(seconds=200)):
-
+def use_cache(live_time=10):
     def wrap(func):
         """Decorator for using cache"""
-        cache = {}
 
         def wrapper(*args):
-            now = datetime.datetime.now()
+            now = time()
             if args not in cache or now - cache[args][0] > live_time:
                 value = func(*args)
                 cache[args] = (now, value)
             return cache[args][1]
+
         return wrapper
+
     return wrap
 
 
