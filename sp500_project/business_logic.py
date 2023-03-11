@@ -1,16 +1,11 @@
 from random import uniform, randint
 from faker import Faker
-from data_access import (get_file_information,
-                         record_new_line,
-                         record_new_information,
-                         check_sector_existence,
-                         check_name_uniqueness,
-                         check_symbol_uniqueness,
-                         check_symbol_existence,
-                         CompanyAlreadyExistsError,
+from data_access import (CompanyAlreadyExistsError,
                          WrongSectorError,
-                         NoSuchSymbolError)
+                         NoSuchSymbolError,
+                         provider)
 from time import time
+from config import file_extension, name_of_db
 
 cache = {}
 
@@ -19,10 +14,10 @@ def use_cache(live_time=10):
     def wrap(func):
         """Decorator for using cache"""
 
-        def wrapper(*args):
+        def wrapper(*args, **kwargs):
             now = time()
             if args not in cache or now - cache[args][0] > live_time:
-                value = func(*args)
+                value = func(*args, **kwargs)
                 cache[args] = (now, value)
             return cache[args][1]
 
@@ -32,10 +27,11 @@ def use_cache(live_time=10):
 
 
 @use_cache()
-def find_info(name: str) -> list:
+def find_info(text: str) -> list:
     company_list = []
-    for company_dict in get_file_information():
-        if name.lower() in company_dict.get('Name').lower():
+    for company_dict in provider(file_extension,
+                                 name_of_db).get_file_information():
+        if text.lower() in company_dict.get('Name').lower():
             company_list.append(company_dict)
     return company_list
 
@@ -43,33 +39,41 @@ def find_info(name: str) -> list:
 @use_cache()
 def get_companies_by_sector(sector: str) -> list:
     return list(filter(lambda comp: sector.lower() == comp['Sector'].lower(),
-                       get_file_information()))
+                       provider(file_extension,
+                                name_of_db).get_file_information()))
 
 
 def calculate_average_price() -> float:
     total_price = 0
-    for company_dict in get_file_information():
+    for company_dict in provider(file_extension,
+                                 name_of_db).get_file_information():
         total_price += float(company_dict['Price'])
-    return round(total_price / len(get_file_information()), 4)
+    return round(total_price /
+                 len(provider(file_extension,
+                              name_of_db).get_file_information()), 4)
 
 
 def get_top_10_companies() -> list:
-    sorted_lst = sorted(get_file_information(),
+    sorted_lst = sorted(provider(file_extension,
+                                 name_of_db).get_file_information(),
                         key=lambda dct: float(dct['Price']), reverse=True)
     return [(dct['Name'], dct['Price']) for dct in sorted_lst[:10]]
 
 
 @use_cache()
-def add_new_company(symbol: str, name: str, sector: str, price: float):
+def add_new_company(symbol: str, new_name: str, sector: str, price: float):
     try:
-        check_symbol_uniqueness(symbol=symbol)
-        check_name_uniqueness(name=name)
-        check_sector_existence(sector=sector)
+        provider(file_extension,
+                 name_of_db).check_symbol_uniqueness(symbol=symbol)
+        provider(file_extension,
+                 name_of_db).check_name_uniqueness(name=new_name)
+        provider(file_extension,
+                 name_of_db).check_sector_existence(sector=sector)
         new_line = {'Symbol': symbol,
-                    'Name': name,
+                    'Name': new_name,
                     'Sector': sector,
                     'Price': price}
-        record_new_line(new_line)
+        provider(file_extension, name_of_db).record_new_line(new_line)
         return True
     except CompanyAlreadyExistsError as err:
         print(err)
@@ -78,15 +82,19 @@ def add_new_company(symbol: str, name: str, sector: str, price: float):
 
 
 @use_cache()
-def update_company_name(symbol: str, name: str):
+def update_company_name(symbol: str, new_name: str):
     try:
-        check_symbol_existence(symbol=symbol)
-        check_name_uniqueness(name=name)
-        file = get_file_information()
+        provider(file_extension,
+                 name_of_db).check_symbol_existence(symbol=symbol)
+        provider(file_extension,
+                 name_of_db).check_name_uniqueness(name=new_name)
+        file = provider(file_extension,
+                        name_of_db).get_file_information()
         for dct in file:
             if dct.get('Symbol').lower() == symbol.lower():
-                dct['Name'] = name
-        record_new_information(file)
+                dct['Name'] = new_name
+        provider(file_extension,
+                 name_of_db).record_new_information(file)
         return True
     except NoSuchSymbolError as err:
         print(err)
@@ -97,13 +105,16 @@ def update_company_name(symbol: str, name: str):
 @use_cache()
 def delete_company(symbol: str):
     try:
-        check_symbol_existence(symbol=symbol)
-        file = get_file_information()
+        provider(file_extension,
+                 name_of_db).check_symbol_existence(symbol=symbol)
+        file = provider(file_extension,
+                        name_of_db).get_file_information()
         for dct in file:
             if dct.get('Symbol').lower() == symbol.lower():
                 index = file.index(dct)
                 del file[index]
-        record_new_information(file)
+        provider(file_extension,
+                 name_of_db).record_new_information(file)
         return True
     except NoSuchSymbolError as err:
         print(err)
@@ -111,7 +122,7 @@ def delete_company(symbol: str):
 
 def truncate_all():
     file = []
-    record_new_information(file)
+    provider(file_extension, name_of_db).record_new_information(file)
 
 
 def take_random_symbol() -> str:
@@ -131,4 +142,5 @@ def generate_random_data(number):
                                 'Price': uniform(0, 1000),
                                 'Name': fake.company(),
                                 'Sector': fake.catch_phrase()})
-    record_new_information(new_information)
+    provider(file_extension,
+             name_of_db).record_new_information(new_information)
