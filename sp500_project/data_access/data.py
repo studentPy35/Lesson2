@@ -14,6 +14,9 @@ def provider(file_extension, name):
 
 
 class FileDB:
+    def __init__(self, file_name):
+        self.file_name = file_name
+
     def get_file_information(self):
         return ''
 
@@ -75,10 +78,9 @@ class Sp500Json(FileDB):
             return json.load(file)
 
     def record_new_line(self, new_line):
-        data = self.get_file_information()
-        new_info = data.append(new_line)
+        data = self.get_file_information() + [new_line]
         with open(self.file_name, 'w', encoding='utf8') as file:
-            json.dump(new_info, file, indent=2)
+            json.dump(data, file, indent=2)
 
     def record_new_information(self, new_information: list):
         with open(self.file_name, 'w', encoding='utf8') as file:
