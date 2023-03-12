@@ -34,6 +34,7 @@ while True:
                    '10 - Populate file with random data_access\n'
                    'Your choice: '
                    )
+
     try:
         validator(choice)
     except NotDigitError as err:
@@ -84,7 +85,7 @@ while True:
             print(err)
             continue
 
-        if add_new_company(symbol=symbol, name=name,
+        if add_new_company(symbol=symbol, new_name=name,
                            price=float(price), sector=sector):
             print('The new company has added')
 
